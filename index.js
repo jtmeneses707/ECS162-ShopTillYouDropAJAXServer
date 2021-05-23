@@ -22,7 +22,7 @@ app.use(function(request, response, next) {
 })
 
 // Initial end point for Shop 1 Layout.
-// Sends the init. list of first 99 CA schools to the client. 
+// Sends the init. list of first 99 CA schools in alpha. order to the client. 
 app.get("/api/get-school-overview", async function(req, res) {
 
   // API call for getting first 99 schools awarding degres in call
@@ -35,12 +35,29 @@ app.get("/api/get-school-overview", async function(req, res) {
 });
 
 // Gets data for a specific school. School name is a query param.
-app.get("/api/get-school", async function(req, res) {
+// Sends all info for school needed in shop 2. 
+// Sends only cost based on in-state numbers. 
+app.get("/api/get-school-cost", async function(req, res) {
   const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${req.query.school}&fields=latest.cost`;
   console.log("Sending data for: " + req.query.school);
   let schoolData = await fetch(getSchool);
   schoolData = await schoolData.json();
-  res.json(schoolData);
+  // Exclude meta data, get only data. 
+  schoolData = schoolData.results[0];
+  // Total Cost Including Room, Board, Books and Fees, and Tuition
+  let totalCost = Number(schoolData["latest.cost.attendance.academic_year"]);
+  // Cost of tuition alone. 
+  let tuition = Number(schoolData["latest.cost.tuition.in_state"]);
+  let data = {
+    'tuition' : tuition, 
+    'other' : totalCost - tuition, 
+    'total' : totalCost
+  }
+  console.log(data);
+  // Tuition cost only
+  res.json(data);
+  console.log("Data Received: ", schoolData);
+  console.log("Cost: ", totalCost);
 });
 
 
