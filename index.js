@@ -38,12 +38,7 @@ app.get("/api/get-school-overview", async function(req, res) {
 // Sends all info for school needed in shop 2. 
 // Sends only cost based on in-state numbers. 
 app.get("/api/get-school-cost", async function(req, res) {
-  const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${req.query.school}&fields=latest.cost`;
-  console.log("Sending data for: " + req.query.school);
-  let schoolData = await fetch(getSchool);
-  // Exclude meta data, get only data. 
-  schoolData = await schoolData.json();
-  schoolData = schoolData.results[0];
+  let schoolData = await getSchoolData(req.query.school);
   // Total Cost Including Room, Board, Books and Fees, and Tuition
   let totalCost = Number(schoolData["latest.cost.attendance.academic_year"]);
   // Cost of tuition alone. 
@@ -63,12 +58,7 @@ app.get("/api/get-school-cost", async function(req, res) {
 // Gets discount amount based on family income for specific school.
 // Param for income level range is sent with query.
 app.get("/api/get-school-discount", async function(req, res) {
-  const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${req.query.school}&fields=latest.cost`;
-  console.log("Sending data for: " + req.query.school);
-  let schoolData = await fetch(getSchool);
-  // Exclude meta data, get only data. 
-  schoolData = await schoolData.json();
-  schoolData = schoolData.results[0];
+  let schoolData = await getSchoolData(req.query.school);
   // Get cost by income level based on query param.
   // latest.cost.net_price.public.by_income_level
   let priceByIncome = schoolData[`latest.cost.net_price.public.by_income_level.${req.query.range}`];
@@ -82,6 +72,37 @@ app.get("/api/get-school-discount", async function(req, res) {
     'discount': priceByIncome - totalCost
   });
 });
+
+
+
+// Helper functions
+
+/**
+ * Returns JSON data of a school's data from gov API. 
+ * @param {string} school
+ */
+async function getSchoolData(school, ) {
+  const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${school}&fields=latest.cost`;
+  console.log("Sending data for: " + school);
+  let schoolData = await fetch(getSchool);
+  // Exclude meta data, get only data. 
+  schoolData = await schoolData.json();
+  // Get only JSON data, not array of JSON data. 
+  schoolData = schoolData.results[0];
+  return schoolData;
+}
+
+
+/**
+ * Returns a boolean for if a school is a CA public school.
+ * @param {string} school
+ * @return {bool}
+ */
+function isPublic(school) {
+  return (school.includes("University of Californa") || school.includes("California State University"))
+}
+
+
 
 
 
