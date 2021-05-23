@@ -41,25 +41,47 @@ app.get("/api/get-school-cost", async function(req, res) {
   const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${req.query.school}&fields=latest.cost`;
   console.log("Sending data for: " + req.query.school);
   let schoolData = await fetch(getSchool);
-  schoolData = await schoolData.json();
   // Exclude meta data, get only data. 
+  schoolData = await schoolData.json();
   schoolData = schoolData.results[0];
   // Total Cost Including Room, Board, Books and Fees, and Tuition
   let totalCost = Number(schoolData["latest.cost.attendance.academic_year"]);
   // Cost of tuition alone. 
   let tuition = Number(schoolData["latest.cost.tuition.in_state"]);
   let data = {
-    'tuition' : tuition, 
-    'other' : totalCost - tuition, 
-    'total' : totalCost
+    'tuition': tuition,
+    'other': totalCost - tuition,
+    'total': totalCost
   }
-  console.log(data);
-  // Tuition cost only
+  console.log("School data", data);
+  // Send json of data containing tuition, total, and other costs.
   res.json(data);
-  console.log("Data Received: ", schoolData);
-  console.log("Cost: ", totalCost);
+  // console.log("Data Received: ", schoolData);
+  // console.log("Cost: ", totalCost);
 });
 
+// Gets discount amount based on family income for specific school.
+// Param for income level range is sent with query.
+app.get("/api/get-school-discount", async function(req, res) {
+  const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${req.query.school}&fields=latest.cost`;
+  console.log("Sending data for: " + req.query.school);
+  let schoolData = await fetch(getSchool);
+  // Exclude meta data, get only data. 
+  schoolData = await schoolData.json();
+  schoolData = schoolData.results[0];
+  // Get cost by income level based on query param.
+  // latest.cost.net_price.public.by_income_level
+  let priceByIncome = schoolData[`latest.cost.net_price.public.by_income_level.${req.query.range}`];
+  console.log(priceByIncome);
+  let totalCost = Number(schoolData["latest.cost.attendance.academic_year"]);
+  let tuition = Number(schoolData["latest.cost.tuition.in_state"]);
+  res.json({
+    'tuition': tuition,
+    'other': totalCost - tuition,
+    'total': totalCost,
+    'discount': priceByIncome - totalCost
+  });
+});
 
 
 
