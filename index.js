@@ -59,9 +59,14 @@ app.get("/api/get-school-cost", async function(req, res) {
 // Param for income level range is sent with query.
 app.get("/api/get-school-discount", async function(req, res) {
   let schoolData = await getSchoolData(req.query.school);
+  let schoolType = 'private';
+  console.log(isPublic(req.query.school));
+  if (isPublic(req.query.school)) {
+    schoolType = 'public';
+  }
   // Get cost by income level based on query param.
   // latest.cost.net_price.public.by_income_level
-  let priceByIncome = schoolData[`latest.cost.net_price.public.by_income_level.${req.query.range}`];
+  let priceByIncome = schoolData[`latest.cost.net_price.${schoolType}.by_income_level.${req.query.range}`];
   console.log(priceByIncome);
   let totalCost = Number(schoolData["latest.cost.attendance.academic_year"]);
   let tuition = Number(schoolData["latest.cost.tuition.in_state"]);
@@ -81,7 +86,7 @@ app.get("/api/get-school-discount", async function(req, res) {
  * Returns JSON data of a school's data from gov API. 
  * @param {string} school
  */
-async function getSchoolData(school, ) {
+async function getSchoolData(school) {
   const getSchool = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=${school}&fields=latest.cost`;
   console.log("Sending data for: " + school);
   let schoolData = await fetch(getSchool);
@@ -99,7 +104,7 @@ async function getSchoolData(school, ) {
  * @return {bool}
  */
 function isPublic(school) {
-  return (school.includes("University of Californa") || school.includes("California State University"))
+  return (school.includes("University of California") || school.includes("California State University"))
 }
 
 
