@@ -11,11 +11,6 @@ const app = express();
 // API key for accessing data from gov api.
 const apiKey = "1Mv8QnLNFFMrQkMkN6AKDFYPACgTWR8CoXpzWpiS";
 
-
-
-const otherApicall = `https://api.data.gov/ed/collegescorecard/v1/schools.json?api_key=${apiKey}&school.name=University of California-Davis&fields=latest.cost`;
-
-
 app.use(function(request, response, next) {
   console.log("got request", request.url);
   next();
@@ -51,31 +46,33 @@ app.get("/api/get-school-cost", async function(req, res) {
   console.log("School data", data);
   // Send json of data containing tuition, total, and other costs.
   res.json(data);
-  // console.log("Data Received: ", schoolData);
-  // console.log("Cost: ", totalCost);
+
 });
 
 // Gets discount amount based on family income for specific school.
 // Param for income level range is sent with query.
 app.get("/api/get-school-discount", async function(req, res) {
+  console.log("Getting discount pricing for " + req.query.school);
   let schoolData = await getSchoolData(req.query.school);
   let schoolType = 'private';
-  console.log(isPublic(req.query.school));
   if (isPublic(req.query.school)) {
     schoolType = 'public';
   }
+
   // Get cost by income level based on query param.
   // latest.cost.net_price.public.by_income_level
   let priceByIncome = schoolData[`latest.cost.net_price.${schoolType}.by_income_level.${req.query.range}`];
-  console.log(priceByIncome);
   let totalCost = Number(schoolData["latest.cost.attendance.academic_year"]);
   let tuition = Number(schoolData["latest.cost.tuition.in_state"]);
-  res.json({
+  let data = {
     'tuition': tuition,
     'other': totalCost - tuition,
     'total': totalCost,
+    'discounted price': priceByIncome,
     'discount': priceByIncome - totalCost
-  });
+  }
+  console.log("Sending discount information", data);
+  res.json(data);
 });
 
 
