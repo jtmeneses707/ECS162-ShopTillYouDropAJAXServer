@@ -1,10 +1,7 @@
 // A static server using Node and Express
 const express = require("express");
-
 const fetch = require("node-fetch");
-
 const app = express();
-
 
 // app.set('trust proxy', true);
 
@@ -104,29 +101,9 @@ function isPublic(school) {
   return (school.includes("University of California") || school.includes("California State University"))
 }
 
-
-
-
-
-
-// Test query
-app.get("/query/test", async function(req, res, next) {
-  console.log("Trying to get API data");
-  let t = await fetch(get99);
-  t = await t.json();
-  res.json(t);
-  console.log(t);
-});
-
-app.get("/query/test1", async function(req, res, next) {
-  let t = await fetch(otherApicall);
-  t = await t.json();
-  console.log(t);
-});
-
 app.use(function(request, response) {
   response.status(404);
-  response.send("Cannot answer this request");
+  response.send("ERROR 404: Cannot answer this request...");
 })
 
 
